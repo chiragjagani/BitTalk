@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        <!-- Primary colors -->
+        <color name="primary">#1976D2</color>
+        <color name="primary_variant">#004BA0</color>
+        <color name="primary_light">#63A4FF</color>
+
+        <!-- Secondary colors -->
+        <color name="secondary">#00796B</color>
+        <color name="secondary_variant">#004D40</color>
+        <color name="secondary_light">#48A999</color>
+
+        <!-- Background colors -->
+        <color name="background">#F5F5F5</color>
+        <color name="surface">#FFFFFF</color>
+        <color name="error">#B00020</color>
+
+        <!-- On colors -->
+        <color name="on_primary">#FFFFFF</color>
+        <color name="on_secondary">#FFFFFF</color>
+        <color name="on_background">#000000</color>
+        <color name="on_surface">#000000</color>
+        <color name="on_error">#FFFFFF</color>
+
+        <!-- Common colors -->
+        <color name="white">#FFFFFF</color>
+        <color name="black">#000000</color>
+        <color name="gray_light">#E0E0E0</color>
+        <color name="gray_medium">#9E9E9E</color>
+        <color name="gray_dark">#616161</color>
+
+        <!-- Chat specific colors -->
+        <color name="message_sent_background">#E3F2FD</color>
+        <color name="message_received_background">#F5F5F5</color>
+        <color name="message_text">#212121</color>
+
+</resources>

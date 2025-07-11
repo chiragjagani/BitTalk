@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">BitTalk</string>
+    <string name="not_connected">Not connected</string>
+    <string name="connecting">Connecting…</string>
+    <string name="connected">Connected</string>
+    <string name="connect">Connect</string>
+    <string name="cancel">Cancel</string>
+    <string name="scan">Scan</string>
+    <string name="select_device">Select a Device</string>
+    <string name="no_devices_found">No devices found. Make sure Bluetooth is enabled.</string>
+    <string name="type_message">Type a message</string>
+    <string name="send">Send</string>
+    <string name="paired">Paired</string>
+    <string name="available">Available</string>
+    <string name="unknown_device">Unknown Device</string>
+</resources>
