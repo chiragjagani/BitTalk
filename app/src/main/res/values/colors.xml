@@ -1,19 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-        <!-- Primary colors -->
-        <color name="primary">#1976D2</color>
-        <color name="primary_variant">#004BA0</color>
-        <color name="primary_light">#63A4FF</color>
+        <!-- Modern Professional Color Palette -->
+        <!-- Primary - Trustworthy Blue -->
+        <color name="primary">#0A66C2</color>
+        <color name="primary_variant">#004182</color>
+        <color name="primary_light">#5E9FF5</color>
 
-        <!-- Secondary colors -->
-        <color name="secondary">#00796B</color>
-        <color name="secondary_variant">#004D40</color>
-        <color name="secondary_light">#48A999</color>
+        <!-- Secondary - Friendly Teal -->
+        <color name="secondary">#00BFA5</color>
+        <color name="secondary_variant">#00897B</color>
+        <color name="secondary_light">#5DF2D6</color>
 
         <!-- Background colors -->
         <color name="background">#F5F5F5</color>
+        <color name="background_light">#FAFBFC</color>
+        <color name="background_dark">#0F1419</color>
         <color name="surface">#FFFFFF</color>
-        <color name="error">#B00020</color>
+        <color name="surface_light">#FFFFFF</color>
+        <color name="surface_dark">#1A1F29</color>
+
+        <!-- Accent colors -->
+        <color name="error">#F44336</color>
+        <color name="success">#4CAF50</color>
+        <color name="warning">#FF9800</color>
+        <color name="info">#2196F3</color>
+
+        <!-- Text colors -->
+        <color name="text_primary_light">#1C1E21</color>
+        <color name="text_primary_dark">#E7E9EA</color>
+        <color name="text_secondary_light">#606770</color>
+        <color name="text_secondary_dark">#8B98A5</color>
+        <color name="text_hint">#65676B</color>
+
+        <!-- Common colors -->
+        <color name="white">#FFFFFF</color>
+        <color name="black">#000000</color>
+        <color name="gray_light">#E0E0E0</color>
+        <color name="gray_medium">#9E9E9E</color>
+        <color name="gray_dark">#616161</color>
+        <color name="divider_light">#E4E6EB</color>
+        <color name="divider_dark">#2F3336</color>
 
         <!-- On colors -->
         <color name="on_primary">#FFFFFF</color>
@@ -22,16 +48,16 @@
         <color name="on_surface">#000000</color>
         <color name="on_error">#FFFFFF</color>
 
-        <!-- Common colors -->
-        <color name="white">#FFFFFF</color>
-        <color name="black">#000000</color>
-        <color name="gray_light">#E0E0E0</color>
-        <color name="gray_medium">#9E9E9E</color>
-        <color name="gray_dark">#616161</color>
-
         <!-- Chat specific colors -->
         <color name="message_sent_background">#E3F2FD</color>
+        <color name="message_sent_light">#E3F2FD</color>
+        <color name="message_sent_dark">#1E3A5F</color>
         <color name="message_received_background">#F5F5F5</color>
+        <color name="message_received_light">#F5F7FA</color>
+        <color name="message_received_dark">#22303C</color>
         <color name="message_text">#212121</color>
 
+        <!-- Empty state colors -->
+        <color name="empty_state_icon">#C3CBD5</color>
+        <color name="empty_state_text">#8B98A5</color>
 </resources>

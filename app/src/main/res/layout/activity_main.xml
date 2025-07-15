@@ -13,16 +13,34 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:liftOnScroll="true">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:title="@string/app_name"
-            app:titleTextColor="@color/white"
+            app:titleStyle="bold"
+            app:titleTextColor="?attr/colorOnSurface"
             app:subtitle="Not connected"
-            app:subtitleTextColor="@color/gray_light" />
+            app:subtitleTextColor="@color/gray_light">
+
+            <!-- Disconnect button (initially hidden) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/disconnectButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginEnd="8dp"
+                android:text="Disconnect"
+                android:visibility="gone"
+                style="@style/Widget.Material3.Button.TextButton"
+                app:icon="@drawable/ic_disconnect"
+                app:iconTint="@color/white"
+                android:textColor="@color/white" />
+
+        </com.google.android.material.appbar.MaterialToolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -32,6 +50,10 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
+        <!-- Empty State (shown when not connected) -->
+        <include
+            layout="@layout/empty_state_layout" />
+
         <!-- Messages RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/messagesRecyclerView"
@@ -39,7 +61,8 @@
             android:layout_height="match_parent"
             android:padding="8dp"
             android:clipToPadding="false"
-            android:paddingBottom="80dp" />
+            android:paddingBottom="80dp"
+            android:visibility="gone" />
 
         <!-- FAB for device selection -->
         <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
@@ -51,18 +74,20 @@
             android:layout_marginBottom="16dp"
             android:text="Connect"
             app:icon="@drawable/ic_bluetooth"
-            app:backgroundTint="@color/secondary" />
+            style="@style/Widget.Material3.Button.UnelevatedButton" />
 
     </FrameLayout>
 
-    <!-- Input bar - OUTSIDE the weight container -->
+    <!-- Input bar -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/inputBarCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        app:cardElevation="4dp"
-        app:cardCornerRadius="24dp">
+        android:visibility="gone"
+        app:cardElevation="2dp"
+        app:cardCornerRadius="24dp"
+        app:cardBackgroundColor="?attr/colorSurfaceVariant">
 
         <LinearLayout
             android:id="@+id/inputBar"
@@ -91,6 +116,7 @@
                     android:maxLines="4"
                     android:padding="12dp"
                     android:imeOptions="actionSend"
+                    android:textColor="?attr/colorOnSurface"
                     android:background="@android:color/transparent" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -102,7 +128,8 @@
                 android:layout_marginEnd="4dp"
                 app:fabSize="mini"
                 app:srcCompat="@drawable/ic_send"
-                app:tint="@color/white"
+                app:tint="?attr/colorOnSecondary"
+                app:backgroundTint="?attr/colorSecondary"
                 android:contentDescription="Send message" />
 
         </LinearLayout>
