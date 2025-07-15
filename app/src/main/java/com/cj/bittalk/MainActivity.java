@@ -12,10 +12,14 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +35,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.cj.bittalk.adapters.DeviceAdapter;
 import com.cj.bittalk.adapters.MessageAdapter;
@@ -54,6 +59,10 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
     private MessageAdapter messageAdapter;
     private DeviceAdapter deviceAdapter;
     private AlertDialog deviceDialog;
+
+    private LinearLayout emptyStateLayout;
+    private MaterialButton disconnectButton;
+    private MaterialButton getStartedButton;
 
     private final ActivityResultLauncher<Intent> enableBluetoothLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -94,21 +103,151 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Critical: Set window flags BEFORE setupViews
+        getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
+                        WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
+        );
+
         setupViews();
         checkPermissions();
     }
 
     private void setupViews() {
+        // Setup toolbar
         setSupportActionBar(binding.toolbar);
 
+        // Get references to new UI elements
+        emptyStateLayout = findViewById(R.id.emptyStateLayout);
+        disconnectButton = findViewById(R.id.disconnectButton);
+        getStartedButton = findViewById(R.id.getStartedButton);
+
+        // Setup RecyclerView for messages
         messageAdapter = new MessageAdapter();
-        binding.messagesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true); // This is important!
+        binding.messagesRecyclerView.setLayoutManager(layoutManager);
         binding.messagesRecyclerView.setAdapter(messageAdapter);
 
+        // Setup send button
         binding.sendButton.setOnClickListener(v -> sendMessage());
         binding.deviceSelectionFab.setOnClickListener(v -> showDeviceSelectionDialog());
 
+        // Setup disconnect button
+        if (disconnectButton != null) {
+            disconnectButton.setOnClickListener(v -> showDisconnectDialog());
+        }
+
+        // Setup get started button in empty state
+        if (getStartedButton != null) {
+            getStartedButton.setOnClickListener(v -> showDeviceSelectionDialog());
+        }
+
+        // Setup input field with IME action
+        binding.messageInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEND) {
+                sendMessage();
+                return true;
+            }
+            return false;
+        });
+
+        // Auto-scroll when keyboard appears
+        binding.messagesRecyclerView.addOnLayoutChangeListener((v, left, top, right, bottom,
+                                                                oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (bottom < oldBottom && messageAdapter.getItemCount() > 0) {
+                binding.messagesRecyclerView.postDelayed(() ->
+                        binding.messagesRecyclerView.smoothScrollToPosition(
+                                messageAdapter.getItemCount() - 1
+                        ), 100);
+            }
+        });
+
+        // Setup input field with IME action
+        binding.messageInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEND) {
+                    sendMessage();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        // Auto-scroll when keyboard appears
+        binding.messagesRecyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                if (bottom < oldBottom && messageAdapter.getItemCount() > 0) {
+                    binding.messagesRecyclerView.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            binding.messagesRecyclerView.smoothScrollToPosition(
+                                    messageAdapter.getItemCount() - 1
+                            );
+                        }
+                    }, 100);
+                }
+            }
+        });
+
+        // Setup device selection FAB
+        binding.deviceSelectionFab.setOnClickListener(v -> showDeviceSelectionDialog());
+
+        // Disable input until connected
         setInputEnabled(false);
+        // Show empty state initially
+        showEmptyState();
+    }
+
+    private void showEmptyState() {
+        if (emptyStateLayout != null) {
+            emptyStateLayout.setVisibility(View.VISIBLE);
+        }
+        binding.messagesRecyclerView.setVisibility(View.GONE);
+        binding.inputBarCard.setVisibility(View.GONE);
+        binding.deviceSelectionFab.setExtended(true);
+        setInputEnabled(false);
+    }
+
+    private void hideEmptyState() {
+        if (emptyStateLayout != null) {
+            emptyStateLayout.setVisibility(View.GONE);
+        }
+        binding.messagesRecyclerView.setVisibility(View.VISIBLE);
+        binding.inputBarCard.setVisibility(View.VISIBLE);
+        binding.deviceSelectionFab.setExtended(false);
+    }
+
+    private void showDisconnectDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Disconnect")
+                .setMessage("Are you sure you want to disconnect? Your chat history will be cleared.")
+                .setPositiveButton("Disconnect", (dialog, which) -> {
+                    disconnect();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void disconnect() {
+        if (bluetoothService != null) {
+            bluetoothService.stop();
+        }
+
+        // Clear messages
+        messageAdapter.clearMessages();
+
+        // Reset UI
+        showEmptyState();
+        binding.toolbar.setSubtitle("Not connected");
+        if (disconnectButton != null) {
+            disconnectButton.setVisibility(View.GONE);
+        }
+
+        Toast.makeText(this, "Disconnected", Toast.LENGTH_SHORT).show();
     }
 
     private boolean hasBluetoothPermission() {
@@ -293,6 +432,13 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
             byte[] send = message.getBytes(StandardCharsets.UTF_8);
             bluetoothService.write(send);
             binding.messageInput.setText("");
+
+            // Hide keyboard after sending
+            View view = this.getCurrentFocus();
+            if (view != null) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
         }
     }
 
@@ -342,18 +488,26 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
             switch (state) {
                 case BluetoothService.STATE_CONNECTED:
                     binding.toolbar.setSubtitle("Connected");
+                    hideEmptyState();
                     setInputEnabled(true);
-                    binding.deviceSelectionFab.setExtended(false);
+                    if (disconnectButton != null) {
+                        disconnectButton.setVisibility(View.VISIBLE);
+                    }
                     break;
+
                 case BluetoothService.STATE_CONNECTING:
                     binding.toolbar.setSubtitle("Connecting...");
                     setInputEnabled(false);
                     break;
+
                 case BluetoothService.STATE_LISTEN:
                 case BluetoothService.STATE_NONE:
                     binding.toolbar.setSubtitle("Not connected");
+                    showEmptyState();
                     setInputEnabled(false);
-                    binding.deviceSelectionFab.setExtended(true);
+                    if (disconnectButton != null) {
+                        disconnectButton.setVisibility(View.GONE);
+                    }
                     break;
             }
         });
@@ -363,7 +517,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
     public void onMessageReceived(String message) {
         runOnUiThread(() -> {
             messageAdapter.addMessage(new Message(message, false));
-            scrollToBottom();
+            // Auto scroll to new message
+            binding.messagesRecyclerView.smoothScrollToPosition(messageAdapter.getItemCount() - 1);
         });
     }
 
@@ -371,7 +526,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
     public void onMessageSent(String message) {
         runOnUiThread(() -> {
             messageAdapter.addMessage(new Message(message, true));
-            scrollToBottom();
+            // Auto scroll to new message
+            binding.messagesRecyclerView.smoothScrollToPosition(messageAdapter.getItemCount() - 1);
         });
     }
 
@@ -387,6 +543,13 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
         runOnUiThread(() -> {
             binding.toolbar.setSubtitle("Connected to " + deviceName);
             Toast.makeText(this, "Connected to " + deviceName, Toast.LENGTH_SHORT).show();
+            // Show a welcome message in chat
+            Message welcomeMsg = new Message(
+                    "Connected to " + deviceName + ". You can now start chatting!",
+                    false
+            );
+            welcomeMsg.setSystemMessage(true);
+            messageAdapter.addMessage(welcomeMsg);
         });
     }
 
@@ -422,5 +585,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
         if (bluetoothService != null && bluetoothService.getState() == BluetoothService.STATE_NONE) {
             bluetoothService.start();
         }
+        getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
+                        WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
     }
 }

@@ -18,6 +18,11 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     private List<Message> messages = new ArrayList<>();
 
+    public void clearMessages() {
+        messages.clear();
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getItemViewType(int position) {
         Message message = messages.get(position);

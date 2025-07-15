@@ -7,12 +7,21 @@ import java.util.Locale;
 public class Message {
     private String text;
     private boolean isSent;
+    private boolean isSystemMessage = false;
     private long timestamp;
 
     public Message(String text, boolean isSent) {
         this.text = text;
         this.isSent = isSent;
         this.timestamp = System.currentTimeMillis();
+    }
+
+    public boolean isSystemMessage() {
+        return isSystemMessage;
+    }
+
+    public void setSystemMessage(boolean systemMessage) {
+        isSystemMessage = systemMessage;
     }
 
     public String getText() {
