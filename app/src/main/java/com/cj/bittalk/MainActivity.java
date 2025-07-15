@@ -12,10 +12,13 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -94,20 +97,64 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Critical: Set window flags BEFORE setupViews
+        getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
+                        WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
+        );
+
         setupViews();
         checkPermissions();
     }
 
     private void setupViews() {
+        // Setup toolbar
         setSupportActionBar(binding.toolbar);
 
+        // Setup RecyclerView for messages
         messageAdapter = new MessageAdapter();
-        binding.messagesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true); // This is important!
+        binding.messagesRecyclerView.setLayoutManager(layoutManager);
         binding.messagesRecyclerView.setAdapter(messageAdapter);
 
+        // Setup send button
         binding.sendButton.setOnClickListener(v -> sendMessage());
+
+        // Setup input field with IME action
+        binding.messageInput.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEND) {
+                    sendMessage();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        // Auto-scroll when keyboard appears
+        binding.messagesRecyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                if (bottom < oldBottom && messageAdapter.getItemCount() > 0) {
+                    binding.messagesRecyclerView.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            binding.messagesRecyclerView.smoothScrollToPosition(
+                                    messageAdapter.getItemCount() - 1
+                            );
+                        }
+                    }, 100);
+                }
+            }
+        });
+
+        // Setup device selection FAB
         binding.deviceSelectionFab.setOnClickListener(v -> showDeviceSelectionDialog());
 
+        // Disable input until connected
         setInputEnabled(false);
     }
 
@@ -293,6 +340,13 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
             byte[] send = message.getBytes(StandardCharsets.UTF_8);
             bluetoothService.write(send);
             binding.messageInput.setText("");
+
+            // Hide keyboard after sending
+            View view = this.getCurrentFocus();
+            if (view != null) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
         }
     }
 
@@ -363,7 +417,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
     public void onMessageReceived(String message) {
         runOnUiThread(() -> {
             messageAdapter.addMessage(new Message(message, false));
-            scrollToBottom();
+            // Auto scroll to new message
+            binding.messagesRecyclerView.smoothScrollToPosition(messageAdapter.getItemCount() - 1);
         });
     }
 
@@ -371,7 +426,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
     public void onMessageSent(String message) {
         runOnUiThread(() -> {
             messageAdapter.addMessage(new Message(message, true));
-            scrollToBottom();
+            // Auto scroll to new message
+            binding.messagesRecyclerView.smoothScrollToPosition(messageAdapter.getItemCount() - 1);
         });
     }
 
@@ -422,5 +478,8 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
         if (bluetoothService != null && bluetoothService.getState() == BluetoothService.STATE_NONE) {
             bluetoothService.start();
         }
+        getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
+                        WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
     }
 }
